@@ -5,7 +5,12 @@ module.exports = {};
 const ID3FrameMap = {
     "T___": ID3Frame.TextInformationFrame,
     "TXXX": ID3Frame.UserDefinedTextFrame,
-    "APIC": ID3Frame.AttachedPictureFrame
+    "APIC": ID3Frame.AttachedPictureFrame,
+    "USLT": ID3Frame.UnsynchronisedLyricsFrame,
+    "COMM": ID3Frame.CommentFrame,
+    "POPM": ID3Frame.PopularimeterFrame,
+    "PRIV": ID3Frame.PrivateFrame,
+    "CHAP": ID3Frame.ChapterFrame
 };
 
 const ID3FrameOptions = {
@@ -18,6 +23,21 @@ const ID3FrameOptions = {
     },
     "APIC": {
         multiple: false
+    },
+    "USLT": {
+        multiple: false
+    },
+    "COMM": {
+        multiple: true
+    },
+    "POPM": {
+        multiple: true
+    },
+    "PRIV": {
+        multiple: true
+    },
+    "CHAP": {
+        multiple: true
     }
 };
 
@@ -66,7 +86,12 @@ const ID3v230NameToIdentifier = {
     encodingTechnology: "TSSE",
     year:               "TYER",
     userDefinedText:    "TXXX",
-    picture:            "APIC"
+    picture:            "APIC",
+    unsynchronisedLyrics: "USLT",
+    comment:            "COMM",
+    popularimeter:      "POPM",
+    private:            "PRIV",
+    chapter:            "CHAP"
 };
 
 const ID3v220NameToIdentifier = {

@@ -1,6 +1,7 @@
 module.exports = new ID3FrameReader;
 
 const ID3Util = require("./ID3Util");
+const ID3Tag = require("./ID3Tag");
 
 function ID3FrameReader() {
 }
@@ -30,7 +31,10 @@ ID3FrameReader.prototype.buildFrame = function(buffer, array) {
 ID3FrameReader.prototype.buildBuffer = function(frame, array) {
     let buffers = [];
     for(let spec of array) {
-        let convertedValue = convertDataType.toBuffer(getNestedKey(frame, spec.name), spec.dataType, null, frame[spec.encoding]);
+        let convertedValue = getNestedKey(frame, spec.name);
+        if(spec.dataType) {
+            convertedValue = convertDataType.toBuffer(getNestedKey(frame, spec.name), spec.dataType, null, frame[spec.encoding]);
+        }
         let buffer = spec.func.toBuffer(convertedValue, spec.args, frame, frame[spec.encoding]);
         if(buffer instanceof Buffer) {
             buffers.push(buffer);
@@ -54,7 +58,9 @@ const convertDataType = {
         }
     },
     toBuffer: (value, dataType, buffer, encoding = 0x00) => {
-        if(Number.isInteger(value)) {
+        if (value instanceof Buffer) {
+            return value;
+        } else if(Number.isInteger(value)) {
             let hexValue = value.toString(16);
             if(hexValue.length % 2 !== 0) {
                 hexValue = "0" + hexValue;
@@ -62,8 +68,6 @@ const convertDataType = {
             return Buffer.from(hexValue, 'hex');
         } else if (typeof value === 'string' || value instanceof String) {
             return ID3Util.stringToEncodedBuffer(value, encoding);
-        } else if (value instanceof Buffer) {
-            return value;
         } else {
             return Buffer.alloc(0);
         }
@@ -118,5 +122,16 @@ ID3FrameReader.prototype.nullTerminated = {
     },
     toBuffer: (buffer, args, frame, encoding) => {
         return Buffer.concat([buffer, ID3Util.terminationBuffer(encoding)]);
+    }
+};
+
+ID3FrameReader.prototype.subframes = {
+    fromBuffer: (buffer, args) => {
+        if(!args || !(args[0] instanceof ID3Tag)) return null;
+        return [args[0].getTagsFromBuffer(buffer), null];
+    },
+    toBuffer: (frames, args) => {
+        if(!args || !(args[0] instanceof ID3Tag)) Buffer.alloc(0);
+        return args[0].framesToBuffer(frames);
     }
 };

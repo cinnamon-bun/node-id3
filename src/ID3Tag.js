@@ -53,7 +53,7 @@ ID3Tag.prototype.framesToBuffer = function(frames = {}) {
         if(!frameType) return;
         let buffer = (new frameType(this, frame[1], frameIdentifier)).createBuffer();
         frameBuffers.push(buffer);
-    });
+    }.bind(this));
 
     return Buffer.concat(frameBuffers);
 };
@@ -121,8 +121,12 @@ ID3Tag.prototype.loadFrom = function(buffer) {
 };
 
 ID3Tag.prototype.getTags = function() {
+    return this.getTagsFromBuffer(this.body || Buffer.alloc(0));
+};
+
+ID3Tag.prototype.getTagsFromBuffer = function(body) {
     let tags = { raw: {} };
-    let frames = this.getTagFramesFromBody();
+    let frames = this.getTagFramesFromBuffer(body);
     frames.forEach(function(frame) {
         let frameName = ID3FrameMapper.getFrameName(frame.identifier);
         if(ID3FrameMapper.getFrameOptions(frame.identifier).multiple) {
@@ -135,14 +139,6 @@ ID3Tag.prototype.getTags = function() {
         }
     });
     return tags;
-};
-
-/**
- *
- * @return {[ID3Frame]}
- */
-ID3Tag.prototype.getTagFramesFromBody = function() {
-    return this.getTagFramesFromBuffer(this.body || Buffer.alloc(0));
 };
 
 /**

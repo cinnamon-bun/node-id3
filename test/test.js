@@ -123,6 +123,90 @@ describe('NodeID3', function () {
                 Buffer.from('4944330300000000003B4150494300000031000001696D6167652F6A7065670003FFFE610073006400660000005B307836312C20307836322C20307836332C20307836345D', 'hex')
             ), 0);
         });
+
+        it('create USLT frame', function() {
+            let tags = {
+                unsynchronisedLyrics: {
+                    language: "deu",
+                    description: "Haiwsää#",
+                    text: "askdh ashd olahs elowz dlouaish dkajh"
+                }
+            };
+
+            assert.equal(Buffer.compare(
+                NodeID3.create(tags),
+                Buffer.from('4944330300000000006E55534C5400000064000001646575FFFE48006100690077007300E400E40023000000FFFE610073006B00640068002000610073006800640020006F006C00610068007300200065006C006F0077007A00200064006C006F0075006100690073006800200064006B0061006A006800', 'hex')
+            ), 0);
+        });
+
+        it('create COMM frame', function() {
+            const tags = {
+                comment: {
+                    language: "deu",
+                    description: "Haiwsää#",
+                    text: "askdh ashd olahs elowz dlouaish dkajh"
+                }
+            };
+            let frameBuf = Buffer.from('4944330300000000006E434F4D4D00000064000001646575FFFE48006100690077007300E400E40023000000FFFE610073006B00640068002000610073006800640020006F006C00610068007300200065006C006F0077007A00200064006C006F0075006100690073006800200064006B0061006A006800', 'hex');
+
+            assert.equal(Buffer.compare(
+                NodeID3.create(tags),
+                frameBuf
+            ), 0);
+        });
+
+        it('create POPM frame', function() {
+            let frameBuf = Buffer.from('49443303000000000020504F504D0000001600006D61696C406578616D706C652E636F6D00C00000000C', 'hex');
+            const tags = {
+                popularimeter: {
+                    email: "mail@example.com",
+                    rating: 192,  // 1-255
+                    counter: 12
+                }
+            };
+
+            assert.equal(Buffer.compare(
+                NodeID3.create(tags),
+                frameBuf
+            ), 0);
+        });
+
+        it('create PRIV frame', function() {
+            let frameBuf = Buffer.from('4944330300000000003250524956000000140000416243006173646F61687764696F686177646177505249560000000A000041624353535300010205', 'hex');
+            const tags = { PRIV: [{
+                    ownerIdentifier: "AbC",
+                    data: Buffer.from("asdoahwdiohawdaw")
+                }, {
+                    ownerIdentifier: "AbCSSS",
+                    data: Buffer.from([0x01, 0x02, 0x05])
+                }]
+            };
+
+            assert.deepEqual(
+                NodeID3.create(tags),
+                frameBuf
+            );
+        });
+
+        it('create CHAP frame', function() {
+            let frameBuf = Buffer.from('494433030000000000534348415000000049000048657921000000138800001F400000007B000001C8544954320000000F000001FFFE6100620063006400650066005450453100000011000001FFFE61006B0073006800640061007300', 'hex');
+            const tags = { CHAP: [{
+                elementID: "Hey!", //THIS MUST BE UNIQUE!
+                startTimeMs: 5000,
+                endTimeMs: 8000,
+                startOffsetBytes: 123, // OPTIONAL!
+                endOffsetBytes: 456,   // OPTIONAL!
+                tags: {                // OPTIONAL
+                    title: "abcdef",
+                    artist: "akshdas"
+                }
+            }]};
+
+            assert.deepEqual(
+                NodeID3.create(tags),
+                frameBuf
+            );
+        });
     });
 
     describe('#write()', function() {
@@ -299,6 +383,88 @@ describe('NodeID3', function () {
             assert.deepEqual(
                 NodeID3.read(noDesc).picture,
                 obj
+            );
+        });
+
+        it('read USLT frame', function() {
+            let frameBuf = Buffer.from('4944330300000000006E55534C5400000064000001646575FFFE48006100690077007300E400E40023000000FFFE610073006B00640068002000610073006800640020006F006C00610068007300200065006C006F0077007A00200064006C006F0075006100690073006800200064006B0061006A006800', 'hex');
+            const unsynchronisedLyrics = {
+                language: "deu",
+                description: "Haiwsää#",
+                text: "askdh ashd olahs elowz dlouaish dkajh"
+            };
+
+            assert.deepEqual(
+                NodeID3.read(frameBuf).unsynchronisedLyrics,
+                unsynchronisedLyrics
+            );
+        });
+
+        it('read COMM frame', function() {
+            let frameBuf = Buffer.from('4944330300000000006E434F4D4D00000064000001646575FFFE48006100690077007300E400E40023000000FFFE610073006B00640068002000610073006800640020006F006C00610068007300200065006C006F0077007A00200064006C006F0075006100690073006800200064006B0061006A006800', 'hex');
+            const comment = {
+                language: "deu",
+                description: "Haiwsää#",
+                text: "askdh ashd olahs elowz dlouaish dkajh"
+            };
+
+            assert.deepEqual(
+                NodeID3.read(frameBuf).comment,
+                [comment]
+            );
+        });
+
+        it('read POPM frame', function() {
+            let frameBuf = Buffer.from('49443303000000000020504F504D0000001600006D61696C406578616D706C652E636F6D00C00000000C', 'hex');
+            const popularimeter = {
+                email: "mail@example.com",
+                rating: 192,  // 1-255
+                counter: 12
+            };
+
+            assert.deepEqual(
+                NodeID3.read(frameBuf).popularimeter,
+                [popularimeter]
+            );
+        });
+
+        it('read PRIV frame', function() {
+            let frameBuf = Buffer.from('4944330300000000003250524956000000140000416243006173646F61687764696F686177646177505249560000000A000041624353535300010205', 'hex');
+            const priv = [{
+                ownerIdentifier: "AbC",
+                data: Buffer.from("asdoahwdiohawdaw")
+            }, {
+                ownerIdentifier: "AbCSSS",
+                data: Buffer.from([0x01, 0x02, 0x05])
+            }];
+
+            assert.deepEqual(
+                NodeID3.read(frameBuf).private,
+                priv
+            );
+        });
+
+        it('read CHAP frame', function() {
+            let frameBuf = Buffer.from('494433030000000000534348415000000049000048657921000000138800001F400000007B000001C8544954320000000F000001FFFE6100620063006400650066005450453100000011000001FFFE61006B0073006800640061007300', 'hex');
+            const chap = [{
+                elementID: "Hey!", //THIS MUST BE UNIQUE!
+                startTimeMs: 5000,
+                endTimeMs: 8000,
+                startOffsetBytes: 123, // OPTIONAL!
+                endOffsetBytes: 456,   // OPTIONAL!
+                tags: {                // OPTIONAL
+                    title: "abcdef",
+                    artist: "akshdas",
+                    raw: {
+                        TIT2: "abcdef",
+                        TPE1: "akshdas"
+                    }
+                }
+            }];
+
+            assert.deepEqual(
+                NodeID3.read(frameBuf).chapter,
+                chap
             );
         });
     });
