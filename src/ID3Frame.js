@@ -1,5 +1,6 @@
 const ID3Util = require("./ID3Util");
 const ID3FrameReader = require("./ID3FrameReader");
+const ID3FrameSpecifications = require("./ID3FrameSpecifications");
 
 const ID3V2_2_IDENTIFIER_SIZE = 3;
 const ID3V2_3_IDENTIFIER_SIZE = 4;
@@ -39,7 +40,7 @@ class ID3Frame {
         if(buffer.length > 10) {
             this.body = buffer.slice(10, buffer.readUInt32BE(identifierSize) + 10);
             if(this.specification) {
-                let frame = ID3FrameReader.buildFrame(this.body, this.specification);
+                let frame = ID3FrameReader.buildFrame(this.body, this.specification, this.id3Tag);
                 this.frame = frame || this.frame;
             }
         } else {
@@ -54,7 +55,7 @@ class ID3Frame {
             return null;
         }
         if(this.specification) {
-            this.body = ID3FrameReader.buildBuffer(this.frame, this.specification);
+            this.body = ID3FrameReader.buildBuffer(this.frame, this.specification, this.id3Tag);
         }
         let header = Buffer.alloc(10, 0x00);
         header.write(this.identifier, 0);
@@ -67,47 +68,31 @@ module.exports = ID3Frame;
 
 module.exports.TextInformationFrame = class TextInformationFrame extends ID3Frame {
     constructor(id3Tag, value = "", identifier = "TTTT", encodingByte = 0x01) {
-        const specification = [
-            {name: "encodingByte", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value", func: ID3FrameReader.staticSize, dataType: "string", encoding: "encodingByte"}
-        ];
         const frame = {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.TextInformationFrame);
     }
 };
 
 module.exports.UserDefinedTextFrame = class UserDefinedTextFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "TXXX", encodingByte = 0x01) {
-        const specification = [
-            {name: "encodingByte", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.description", func: ID3FrameReader.nullTerminated, dataType: "string", encoding: "encodingByte"},
-            {name: "value.value", func: ID3FrameReader.staticSize, dataType: "string", encoding: "encodingByte"}
-        ];
         const frame = {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.UserDefinedTextFrame);
     }
 };
 
 module.exports.AttachedPictureFrame = class AttachedPictureFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "APIC", encodingByte = 0x01) {
-        const specification = [
-            {name: "encodingByte", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.mime", func: ID3FrameReader.nullTerminated, dataType: "string"},
-            {name: "value.type.id", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.description", func: ID3FrameReader.nullTerminated, dataType: "string", encoding: "encodingByte"},
-            {name: "value.imageBuffer", func: ID3FrameReader.staticSize}
-        ];
         const frame = {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.AttachedPictureFrame);
     }
 
     loadFrom(buffer) {
@@ -133,70 +118,41 @@ module.exports.AttachedPictureFrame = class AttachedPictureFrame extends ID3Fram
 
 module.exports.UnsynchronisedLyricsFrame = class UnsynchronisedLyricsFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "USLT", encodingByte = 0x01) {
-        const specification = [
-            {name: "encodingByte", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.language", func: ID3FrameReader.staticSize, args: [3], dataType: "string"},
-            {name: "value.description", func: ID3FrameReader.nullTerminated, dataType: "string", encoding: "encodingByte"},
-            {name: "value.text", func: ID3FrameReader.staticSize, dataType: "string", encoding: "encodingByte"}
-        ];
         const frame = {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.UnsynchronisedLyricsFrame);
     }
 };
 
 module.exports.CommentFrame = class CommentFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "COMM", encodingByte = 0x01) {
-        const specification = [
-            {name: "encodingByte", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.language", func: ID3FrameReader.staticSize, args: [3], dataType: "string"},
-            {name: "value.description", func: ID3FrameReader.nullTerminated, dataType: "string", encoding: "encodingByte"},
-            {name: "value.text", func: ID3FrameReader.staticSize, dataType: "string", encoding: "encodingByte"}
-        ];
         const frame = {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.CommentFrame);
     }
 };
 
 module.exports.PopularimeterFrame = class PopularimeterFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "POPM") {
-        const specification = [
-            {name: "value.email", func: ID3FrameReader.nullTerminated, dataType: "string"},
-            {name: "value.rating", func: ID3FrameReader.staticSize, args: [1], dataType: "number"},
-            {name: "value.counter", func: ID3FrameReader.staticSize, args: [4], dataType: "number"}
-        ];
         const frame = { value };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.PopularimeterFrame);
     }
 };
 
 module.exports.PrivateFrame = class PrivateFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "PRIV") {
-        const specification = [
-            {name: "value.ownerIdentifier", func: ID3FrameReader.nullTerminated, dataType: "string"},
-            {name: "value.data", func: ID3FrameReader.staticSize, encoding: 0x01}
-        ];
         const frame = { value };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.PrivateFrame);
     }
 };
 
 module.exports.ChapterFrame = class ChapterFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "CHAP") {
-        const specification = [
-            {name: "value.elementID", func: ID3FrameReader.nullTerminated, dataType: "string"},
-            {name: "value.startTimeMs", func: ID3FrameReader.staticSize, args: [4], dataType: "number"},
-            {name: "value.endTimeMs", func: ID3FrameReader.staticSize, args: [4], dataType: "number"},
-            {name: "value.startOffsetBytes", func: ID3FrameReader.staticSize, args: [4], dataType: "number", optional: true},
-            {name: "value.endOffsetBytes", func: ID3FrameReader.staticSize, args: [4], dataType: "number", optional: true},
-            {name: "value.tags", func: ID3FrameReader.subframes, args: [id3Tag], optional: true}
-        ];
         const frame = { value };
-        super(id3Tag, frame, identifier, specification);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.ChapterFrame);
     }
 };

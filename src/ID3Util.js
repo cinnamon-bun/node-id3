@@ -129,6 +129,13 @@ module.exports.terminationBuffer = function(encodingByte = 0x00) {
     }
 };
 
+module.exports.SplitBuffer = class SplitBuffer {
+    constructor(value = null, remainder = null) {
+        this.value = value;
+        this.remainder = remainder;
+    }
+};
+
 module.exports.splitNullTerminatedBuffer = function(buffer, encodingByte = 0x00) {
     let termination = { start: -1, size: 0 };
     if(encodingByte === 0x01 || encodingByte === 0x03) {
@@ -145,12 +152,12 @@ module.exports.splitNullTerminatedBuffer = function(buffer, encodingByte = 0x00)
     }
 
     if(termination.start === -1) {
-        return [null, buffer.slice(0)];
+        return new this.SplitBuffer(null, buffer.slice(0));
     }
     else if(buffer.length <= termination.start + termination.length) {
-        return [buffer.slice(0, termination.start), null];
+        return new this.SplitBuffer(buffer.slice(0, termination.start), null);
     } else {
-        return [buffer.slice(0, termination.start), buffer.slice(termination.start + termination.size)];
+        return new this.SplitBuffer(buffer.slice(0, termination.start), buffer.slice(termination.start + termination.size));
     }
 };
 
