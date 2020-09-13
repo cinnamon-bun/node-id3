@@ -102,7 +102,7 @@ module.exports.stringToEncodedBuffer = function(str, encodingByte) {
 };
 
 module.exports.bufferToDecodedString = function(buffer, encodingByte) {
-    return iconv.decode(buffer, this.encodingFromStringOrByte(encodingByte));
+    return iconv.decode(buffer, this.encodingFromStringOrByte(encodingByte)).replace(/\0/g, '');
 };
 
 module.exports.stringToTerminatedBuffer = function(unterminatedString, encodingByte) {
@@ -126,13 +126,13 @@ module.exports.SplitBuffer = class SplitBuffer {
 
 module.exports.splitNullTerminatedBuffer = function(buffer, encodingByte = 0x00) {
     let termination = { start: -1, size: 0 };
-    if(encodingByte === 0x01 || encodingByte === 0x03) {
-        termination.start = buffer.indexOf(Buffer.from([0x00, 0x00, 0x00]));
+    if(encodingByte === 0x01 || encodingByte === 0x02) {
+        termination.start = buffer.indexOf(Buffer.from([0x00, 0x00]));
         termination.size = 2;
-        if(termination.start === -1) {
-            termination.start = buffer.indexOf(Buffer.from([0x00, 0x00]));
-        } else {
-            termination.start += 1;
+        if(termination.start !== -1 && buffer.length > (termination.start + termination.size)) {
+            if(buffer[termination.start + termination.size] === 0x00) {
+                termination.start += 1;
+            }
         }
     } else {
         termination.start = buffer.indexOf(0x00);

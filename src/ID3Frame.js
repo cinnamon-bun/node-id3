@@ -97,7 +97,7 @@ module.exports.AttachedPictureFrame = class AttachedPictureFrame extends ID3Fram
 
     loadFrom(buffer) {
         super.loadFrom(buffer);
-        if(this.frame.value.type && this.frame.value.type.id) {
+        if(this.frame.value.type && this.frame.value.type.id !== undefined) {
             this.frame.value.type.name = ID3Util.pictureTypeByteToName(this.frame.value.type.id);
         }
         if(this.frame.value.mime) {
