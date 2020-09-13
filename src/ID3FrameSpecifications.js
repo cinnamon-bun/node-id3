@@ -9,7 +9,7 @@ const Types = {
     SUBFRAMES: "subframes"
 };
 
-module.exports = {
+const SpecificationsV230 = {
     TextInformationFrame: [
         {
             name: "encodingByte",
@@ -258,6 +258,57 @@ module.exports = {
         }
     ]
 };
+
+const SpecificationsV220 = {
+    AttachedPictureFrame: [
+        {
+            name: "encodingByte",
+            visibility: Visibilities.INTERNAL,
+            type: Types.STATIC_DATA,
+            options: {
+                size: 1
+            },
+            dataType: "number"
+        },
+        {
+            name: "mime",
+            visibility: Visibilities.VALUE,
+            type: Types.STATIC_DATA,
+            options: {
+                size: 3
+            },
+            dataType: "string"
+        },
+        {
+            name: "type.id",
+            type: Types.STATIC_DATA,
+            visibility: Visibilities.VALUE,
+            options: {
+                size: 1
+            },
+            dataType: "number"
+        },
+        {
+            name: "description",
+            visibility: Visibilities.VALUE,
+            type: Types.NULL_TERMINATED,
+            dataType: "string",
+            encoding: "encodingByte"
+        },
+        {
+            name: "imageBuffer",
+            type: Types.STATIC_DATA
+        }
+    ]
+}
+
+module.exports.getByVersion = (version) => {
+    if(version === 2) {
+        return Object.assign({}, SpecificationsV230, SpecificationsV220);
+    } else {
+        return SpecificationsV230;
+    }
+}
 
 module.exports.Visibilities = Visibilities;
 module.exports.Types = Types;

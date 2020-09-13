@@ -6,6 +6,10 @@ const ID3V2_2_IDENTIFIER_SIZE = 3;
 const ID3V2_3_IDENTIFIER_SIZE = 4;
 const ID3V2_4_IDENTIFIER_SIZE = 4;
 
+const ID3V2_2_HEADER_SIZE = 6;
+const ID3V2_3_HEADER_SIZE = 10;
+const ID3V2_4_HEADER_SIZE = 10;
+
 class ID3Frame {
     constructor(id3Tag, frame = {}, identifier, specification) {
         this.id3Tag = id3Tag;
@@ -20,25 +24,29 @@ class ID3Frame {
         }
 
         let identifierSize;
+        let headerSize;
         switch(this.id3Tag.version) {
             case 0x02:
                 identifierSize = ID3V2_2_IDENTIFIER_SIZE;
+                headerSize = ID3V2_2_HEADER_SIZE;
                 break;
             case 0x03:
                 identifierSize = ID3V2_3_IDENTIFIER_SIZE;
+                headerSize = ID3V2_3_HEADER_SIZE;
                 break;
             case 0x04:
                 identifierSize = ID3V2_4_IDENTIFIER_SIZE;
+                headerSize = ID3V2_4_HEADER_SIZE;
                 break;
             default:
                 return null;
         }
 
         this.identifier = buffer.slice(0, identifierSize).toString();
-        this.header = buffer.slice(0, 10);
+        this.header = buffer.slice(0, headerSize);
         this.frame = { value: {} };
-        if(buffer.length > 10) {
-            this.body = buffer.slice(10, buffer.readUInt32BE(identifierSize) + 10);
+        if(buffer.length > headerSize) {
+            this.body = buffer.slice(headerSize, buffer.readUInt32BE(identifierSize) + headerSize);
             if(this.specification) {
                 let frame = ID3FrameReader.buildFrame(this.body, this.specification, this.id3Tag);
                 this.frame = frame || this.frame;
@@ -72,7 +80,7 @@ module.exports.TextInformationFrame = class TextInformationFrame extends ID3Fram
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.TextInformationFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).TextInformationFrame);
     }
 };
 
@@ -82,7 +90,7 @@ module.exports.UserDefinedTextFrame = class UserDefinedTextFrame extends ID3Fram
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.UserDefinedTextFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).UserDefinedTextFrame);
     }
 };
 
@@ -92,7 +100,7 @@ module.exports.AttachedPictureFrame = class AttachedPictureFrame extends ID3Fram
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.AttachedPictureFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).AttachedPictureFrame);
     }
 
     loadFrom(buffer) {
@@ -122,7 +130,7 @@ module.exports.UnsynchronisedLyricsFrame = class UnsynchronisedLyricsFrame exten
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.UnsynchronisedLyricsFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).UnsynchronisedLyricsFrame);
     }
 };
 
@@ -132,27 +140,27 @@ module.exports.CommentFrame = class CommentFrame extends ID3Frame {
             encodingByte,
             value
         };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.CommentFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).CommentFrame);
     }
 };
 
 module.exports.PopularimeterFrame = class PopularimeterFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "POPM") {
         const frame = { value };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.PopularimeterFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).PopularimeterFrame);
     }
 };
 
 module.exports.PrivateFrame = class PrivateFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "PRIV") {
         const frame = { value };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.PrivateFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).PrivateFrame);
     }
 };
 
 module.exports.ChapterFrame = class ChapterFrame extends ID3Frame {
     constructor(id3Tag, value = {}, identifier = "CHAP") {
         const frame = { value };
-        super(id3Tag, frame, identifier, ID3FrameSpecifications.ChapterFrame);
+        super(id3Tag, frame, identifier, ID3FrameSpecifications.getByVersion(id3Tag.version).ChapterFrame);
     }
 };
