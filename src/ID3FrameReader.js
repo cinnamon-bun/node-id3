@@ -2,6 +2,7 @@ module.exports = new ID3FrameReader;
 
 const ID3Util = require("./ID3Util");
 const ID3FrameSpecifications = require("./ID3FrameSpecifications");
+const ID3Tag = require('./ID3Tag');
 
 function ID3FrameReader() {
 }
@@ -36,6 +37,9 @@ ID3FrameReader.prototype.buildBuffer = function(frame, specification, id3Tag) {
         let convertedValue = getNestedKey(frame, nestedName);
         if(spec.dataType) {
             convertedValue = convertDataType.toBuffer(getNestedKey(frame, nestedName), spec.dataType, frame[spec.encoding], id3Tag);
+        }
+        if(!this[spec.type]) {
+            continue;
         }
         let buffer = this[spec.type].toBuffer(convertedValue, spec.options || {}, frame[spec.encoding], id3Tag);
         if(buffer instanceof Buffer) {
@@ -135,7 +139,7 @@ ID3FrameReader.prototype.nullTerminated = {
     }
 };
 
-/*ID3FrameReader.prototype.subframes = {
+ID3FrameReader.prototype.subframes = {
     fromBuffer: (buffer, options, encoding, id3Tag) => {
         if(!(id3Tag instanceof ID3Tag)) return null;
         return new ID3Util.SplitBuffer(id3Tag.getTagsFromBuffer(buffer), null);
@@ -144,4 +148,4 @@ ID3FrameReader.prototype.nullTerminated = {
         if(!(id3Tag instanceof ID3Tag)) Buffer.alloc(0);
         return id3Tag.framesToBuffer(frames);
     }
-};*/
+};

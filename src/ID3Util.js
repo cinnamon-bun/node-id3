@@ -182,3 +182,37 @@ module.exports.pictureTypeByteToName = function(byte) {
 module.exports.pictureTypeNameToByte = function(name) {
     return APIC_TYPES.indexOf(name) !== -1 ? APIC_TYPES[APIC_TYPES.indexOf(name)] : 0x00;
 };
+
+module.exports.getFramePosition = function(buffer) {
+    /* Search Buffer for valid ID3 frame */
+    let framePosition = -1;
+    let frameHeaderValid = false;
+    do {
+        framePosition = buffer.indexOf("ID3", framePosition + 1);
+        if(framePosition !== -1) {
+            /* It's possible that there is a "ID3" sequence without being an ID3 Frame,
+             * so we need to check for validity of the next 10 bytes
+             */
+            frameHeaderValid = this.isValidID3Header(buffer.slice(framePosition, framePosition + 10));
+        }
+    } while (framePosition !== -1 && !frameHeaderValid);
+
+    if(!frameHeaderValid) {
+        return -1;
+    } else {
+        return framePosition;
+    }
+}
+
+module.exports.removeTagFromBuffer = function(buffer) {
+    const framePosition = this.getFramePosition(buffer);
+    if(framePosition === -1) {
+        return buffer;
+    }
+    if(buffer.length >= framePosition + 10 && this.isValidID3Header(buffer.slice(framePosition, framePosition + 10))) {
+        const size = this.decodeSize(buffer.slice(framePosition + 6, framePosition + 10));
+        return Buffer.concat([buffer.slice(0, framePosition), buffer.slice(framePosition + size + 10)])
+    } else {
+        return buffer;
+    }
+}

@@ -119,7 +119,6 @@ describe('NodeID3', function () {
                 }
             };
 
-
             assert.equal(Buffer.compare(
                 NodeID3.create(tags),
                 Buffer.from('4944330300000000003B4150494300000031000001696D6167652F6A7065670003FFFE610073006400660000005B307836312C20307836322C20307836332C20307836345D', 'hex')
@@ -213,9 +212,7 @@ describe('NodeID3', function () {
 
     describe('#write()', function() {
         it('sync not existing filepath', function() {
-            if(!(NodeID3.write({}, './hopefullydoesnotexist.mp3') instanceof Error)) {
-                assert.fail("No error thrown on non-existing filepath");
-            }
+            assert.throws(NodeID3.write.bind({}, './hopefullydoesnotexist.mp3'), Error);
         });
         it('async not existing filepath', function() {
             NodeID3.write({}, './hopefullydoesnotexist.mp3', function(err) {
@@ -311,14 +308,14 @@ describe('NodeID3', function () {
             );
         });
 
-        /*it('read tag with broken tag', function() {
+        it('read tag with broken tag', function() {
             let frame = NodeID3.create({ title: "asdfghjÄÖP", album: "naBGZwssg" });
             frame[3] = 0x99;
             assert.deepEqual(
                 NodeID3.read(frame),
                 { raw: { }}
             );
-        });*/
+        });
 
         it('read tag with bigger size', function() {
             let frame = NodeID3.create({ title: "asdfghjÄÖP", album: "naBGZwssg" });
@@ -468,6 +465,43 @@ describe('NodeID3', function () {
                 NodeID3.read(frameBuf).chapter,
                 chap
             );
+        });
+    });
+});
+
+describe('ID3Util', function () {
+    describe('#removeTagFromBuffer()', function () {
+        it('no tags in buffer', function () {
+            let emptyBuffer = Buffer.from([0x12, 0x04, 0x05, 0x01, 0x76, 0x27, 0x76, 0x27, 0x76, 0x27, 0x76, 0x27]);
+            assert.equal(Buffer.compare(
+                emptyBuffer,
+                ID3Util.removeTagFromBuffer(emptyBuffer)
+            ), 0);
+        });
+
+        it('tags at start', function () {
+            let buffer = Buffer.from([0x22, 0x73, 0x72]);
+            let bufferWithID3 = Buffer.concat([
+                NodeID3.create({title: "abc"}),
+                buffer
+            ]);
+            assert.equal(Buffer.compare(
+                ID3Util.removeTagFromBuffer(bufferWithID3),
+                buffer
+            ), 0);
+        });
+
+        it('tags in middle/end', function () {
+            let buffer = Buffer.from([0x22, 0x73, 0x72]);
+            let bufferWithID3 = Buffer.concat([
+                buffer,
+                NodeID3.create({title: "abc"}),
+                buffer
+            ]);
+            assert.equal(Buffer.compare(
+                ID3Util.removeTagFromBuffer(bufferWithID3),
+                Buffer.concat([buffer, buffer])
+            ), 0);
         });
     });
 });
